@@ -21,6 +21,8 @@ final class Animator
   private var selectedCellImageViewSnapshot: UIView
   private let cellImageViewRect: CGRect
   
+  private let cellLabelRect: CGRect
+  
   /// 실패 가능한 이니셜라이져를 사용함으로써 실패했을 경우, 기본 애니메이션을 사용한다.
   init?(
     type: PresentationType,
@@ -39,6 +41,8 @@ final class Animator
           let selectedCell = firstViewController.selectedCell else { return nil }
     
     self.cellImageViewRect = selectedCell.locationImageView.convert(selectedCell.locationImageView.bounds, to: window)
+    
+    self.cellLabelRect = selectedCell.locationLabel.convert(selectedCell.locationLabel.bounds, to: window)
   }
   
   func transitionDuration(
@@ -63,7 +67,8 @@ final class Animator
     guard let selectedCell = firstViewController.selectedCell,
           let window = firstViewController.view.window ?? secondViewController.view.window,
           let cellImageSnapshot = selectedCell.locationImageView.snapshotView(afterScreenUpdates: true),
-          let controllerImageSnapshot = secondViewController.locationImageView.snapshotView(afterScreenUpdates: true)
+          let controllerImageSnapshot = secondViewController.locationImageView.snapshotView(afterScreenUpdates: true),
+          let cellLabelSnapshot = selectedCell.locationLabel.snapshotView(afterScreenUpdates: true)
     else {
       transitionContext.completeTransition(true)
       return
@@ -91,10 +96,13 @@ final class Animator
     // 애니메이션화될 2개의 스냅샷 추가
     [backgroundView,
      selectedCellImageViewSnapshot,
-     controllerImageSnapshot
+     controllerImageSnapshot,
+     cellLabelSnapshot
     ].forEach { containerView.addSubview($0) } // 나중에 더 많은 뷰가 추가될 예정
     
     let controllerImageViewRect = secondViewController.locationImageView.convert(secondViewController.locationImageView.bounds, to: window)
+    
+    let controllerLabelRect = secondViewController.locationLabel.convert(secondViewController.locationLabel.bounds, to: window)
     
     [selectedCellImageViewSnapshot, controllerImageSnapshot].forEach {
       $0.frame = isPresenting ? cellImageViewRect : controllerImageViewRect
@@ -104,6 +112,8 @@ final class Animator
     
     selectedCellImageViewSnapshot.alpha = isPresenting ? 1 : 0
     
+    cellLabelSnapshot.frame = isPresenting ? cellLabelRect : controllerLabelRect
+    
     UIView.animateKeyframes(withDuration: Self.duration, delay: 0, options: .calculationModeCubic, animations: {
       UIView.addKeyframe(withRelativeStartTime: 0, relativeDuration: 1) {
         self.selectedCellImageViewSnapshot.frame = isPresenting ? controllerImageViewRect : self.cellImageViewRect
@@ -111,6 +121,8 @@ final class Animator
         
         // fade 애니메이션을 위해 fade view의 alpha 값 변경
         fadeView.alpha = isPresenting ? 1 : 0
+        
+        cellLabelSnapshot.frame = isPresenting ? controllerLabelRect : self.cellLabelRect // 빼면 레이블 애니메이션이 들어가지 않는다.
       }
       
       UIView.addKeyframe(withRelativeStartTime: 0, relativeDuration: 0.6) {
@@ -121,8 +133,8 @@ final class Animator
       
       self.selectedCellImageViewSnapshot.removeFromSuperview()
       controllerImageSnapshot.removeFromSuperview()
-      
       backgroundView.removeFromSuperview()
+      cellLabelSnapshot.removeFromSuperview()
       
       toView.alpha = 1
       
