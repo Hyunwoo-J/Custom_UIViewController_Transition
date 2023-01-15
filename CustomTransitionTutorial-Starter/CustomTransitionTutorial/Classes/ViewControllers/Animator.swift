@@ -60,7 +60,47 @@ final class Animator
     
     containerView.addSubview(toView)
     
-    transitionContext.completeTransition(true) // 호출됨으로 화면 전환이 완료됨을 알 수 있다.
+    guard let selectedCell = firstViewController.selectedCell,
+          let window = firstViewController.view.window ?? secondViewController.view.window,
+          let cellImageSnapshot = selectedCell.locationImageView.snapshotView(afterScreenUpdates: true),
+          let controllerImageSnapshot = secondViewController.locationImageView.snapshotView(afterScreenUpdates: true)
+    else {
+      transitionContext.completeTransition(true)
+      return
+    }
+    
+    let isPresenting = type.isPresenting
+    
+    let imageViewSnapshot: UIView
+    
+    if isPresenting {
+      imageViewSnapshot = cellImageSnapshot
+    } else {
+      imageViewSnapshot = controllerImageSnapshot
+    }
+    
+    toView.alpha = 0
+    
+    [imageViewSnapshot].forEach { containerView.addSubview($0) } // 나중에 더 많은 뷰가 추가될 예정
+    
+    let controllerImageViewRect = secondViewController.locationImageView.convert(secondViewController.locationImageView.bounds, to: window)
+    
+    [imageViewSnapshot].forEach {
+      $0.frame = isPresenting ? cellImageViewRect : controllerImageViewRect
+    }
+    
+    UIView.animateKeyframes(withDuration: Self.duration, delay: 0, options: .calculationModeCubic, animations: {
+      UIView.addKeyframe(withRelativeStartTime: 0, relativeDuration: 1) {
+        imageViewSnapshot.frame = isPresenting ? controllerImageViewRect : self.cellImageViewRect
+      }
+    }, completion: { _ in
+      
+      imageViewSnapshot.removeFromSuperview()
+      
+      toView.alpha = 1
+      
+      transitionContext.completeTransition(true)
+    })
   }
 }
 
@@ -68,7 +108,7 @@ enum PresentationType {
   case present
   case dismiss
   
-  var isPResenting: Bool {
+  var isPresenting: Bool {
     return self == .present
   }
 }
