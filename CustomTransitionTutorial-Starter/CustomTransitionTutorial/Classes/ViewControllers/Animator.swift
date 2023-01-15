@@ -68,7 +68,8 @@ final class Animator
           let window = firstViewController.view.window ?? secondViewController.view.window,
           let cellImageSnapshot = selectedCell.locationImageView.snapshotView(afterScreenUpdates: true),
           let controllerImageSnapshot = secondViewController.locationImageView.snapshotView(afterScreenUpdates: true),
-          let cellLabelSnapshot = selectedCell.locationLabel.snapshotView(afterScreenUpdates: true)
+          let cellLabelSnapshot = selectedCell.locationLabel.snapshotView(afterScreenUpdates: true),
+          let closeButtonSnapshot = secondViewController.closeButton.snapshotView(afterScreenUpdates: true)
     else {
       transitionContext.completeTransition(true)
       return
@@ -97,12 +98,15 @@ final class Animator
     [backgroundView,
      selectedCellImageViewSnapshot,
      controllerImageSnapshot,
-     cellLabelSnapshot
+     cellLabelSnapshot,
+     closeButtonSnapshot
     ].forEach { containerView.addSubview($0) } // 나중에 더 많은 뷰가 추가될 예정
     
     let controllerImageViewRect = secondViewController.locationImageView.convert(secondViewController.locationImageView.bounds, to: window)
     
     let controllerLabelRect = secondViewController.locationLabel.convert(secondViewController.locationLabel.bounds, to: window)
+    
+    let closeButtonRect = secondViewController.closeButton.convert(secondViewController.closeButton.bounds, to: window)
     
     [selectedCellImageViewSnapshot, controllerImageSnapshot].forEach {
       $0.frame = isPresenting ? cellImageViewRect : controllerImageViewRect
@@ -113,6 +117,9 @@ final class Animator
     selectedCellImageViewSnapshot.alpha = isPresenting ? 1 : 0
     
     cellLabelSnapshot.frame = isPresenting ? cellLabelRect : controllerLabelRect
+    
+    closeButtonSnapshot.frame = closeButtonRect
+    closeButtonSnapshot.alpha = isPresenting ? 0 : 1
     
     UIView.animateKeyframes(withDuration: Self.duration, delay: 0, options: .calculationModeCubic, animations: {
       UIView.addKeyframe(withRelativeStartTime: 0, relativeDuration: 1) {
@@ -129,12 +136,17 @@ final class Animator
         self.selectedCellImageViewSnapshot.alpha = isPresenting ? 0 : 1
         controllerImageSnapshot.alpha = isPresenting ? 1: 0
       }
+      
+      UIView.addKeyframe(withRelativeStartTime: isPresenting ? 0.7 : 0, relativeDuration: 0.3) {
+        closeButtonSnapshot.alpha = isPresenting ? 1 : 0
+      }
     }, completion: { _ in
       
       self.selectedCellImageViewSnapshot.removeFromSuperview()
       controllerImageSnapshot.removeFromSuperview()
       backgroundView.removeFromSuperview()
       cellLabelSnapshot.removeFromSuperview()
+      closeButtonSnapshot.removeFromSuperview()
       
       toView.alpha = 1
       
