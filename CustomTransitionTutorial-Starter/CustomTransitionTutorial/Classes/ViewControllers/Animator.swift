@@ -130,6 +130,10 @@ final class Animator
         fadeView.alpha = isPresenting ? 1 : 0
         
         cellLabelSnapshot.frame = isPresenting ? controllerLabelRect : self.cellLabelRect // 빼면 레이블 애니메이션이 들어가지 않는다.
+        
+        [controllerImageSnapshot, self.selectedCellImageViewSnapshot].forEach {
+          $0.layer.cornerRadius = isPresenting ? 0 : 12
+        }
       }
       
       UIView.addKeyframe(withRelativeStartTime: 0, relativeDuration: 0.6) {
