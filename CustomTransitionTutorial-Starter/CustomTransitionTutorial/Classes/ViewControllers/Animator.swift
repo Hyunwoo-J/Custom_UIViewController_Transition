@@ -71,14 +71,28 @@ final class Animator
     
     let isPresenting = type.isPresenting
     
+    let backgroundView: UIView
+    let fadeView = UIView(frame: containerView.bounds)
+    fadeView.backgroundColor = secondViewController.view.backgroundColor
+    
     if isPresenting {
       selectedCellImageViewSnapshot = cellImageSnapshot
+      
+      backgroundView = UIView(frame: containerView.bounds)
+      backgroundView.addSubview(fadeView)
+      fadeView.alpha = 0
+    } else {
+      backgroundView = firstViewController.view.snapshotView(afterScreenUpdates: true) ?? fadeView
+      backgroundView.addSubview(fadeView)
     }
     
     toView.alpha = 0
     
     // 애니메이션화될 2개의 스냅샷 추가
-    [selectedCellImageViewSnapshot, controllerImageSnapshot].forEach { containerView.addSubview($0) } // 나중에 더 많은 뷰가 추가될 예정
+    [backgroundView,
+     selectedCellImageViewSnapshot,
+     controllerImageSnapshot
+    ].forEach { containerView.addSubview($0) } // 나중에 더 많은 뷰가 추가될 예정
     
     let controllerImageViewRect = secondViewController.locationImageView.convert(secondViewController.locationImageView.bounds, to: window)
     
@@ -94,6 +108,9 @@ final class Animator
       UIView.addKeyframe(withRelativeStartTime: 0, relativeDuration: 1) {
         self.selectedCellImageViewSnapshot.frame = isPresenting ? controllerImageViewRect : self.cellImageViewRect
         controllerImageSnapshot.frame = isPresenting ? controllerImageViewRect : self.cellImageViewRect
+        
+        // fade 애니메이션을 위해 fade view의 alpha 값 변경
+        fadeView.alpha = isPresenting ? 1 : 0
       }
       
       UIView.addKeyframe(withRelativeStartTime: 0, relativeDuration: 0.6) {
@@ -104,6 +121,8 @@ final class Animator
       
       self.selectedCellImageViewSnapshot.removeFromSuperview()
       controllerImageSnapshot.removeFromSuperview()
+      
+      backgroundView.removeFromSuperview()
       
       toView.alpha = 1
       
