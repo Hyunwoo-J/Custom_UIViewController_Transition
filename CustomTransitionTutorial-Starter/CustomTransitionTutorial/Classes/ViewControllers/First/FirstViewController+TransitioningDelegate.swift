@@ -14,12 +14,33 @@ extension FirstViewController: UIViewControllerTransitioningDelegate {
     forPresented presented: UIViewController,
     presenting: UIViewController, source: UIViewController
   ) -> UIViewControllerAnimatedTransitioning? {
-    return nil
+    
+    guard let firstViewController = presenting as? FirstViewController,
+          let secondViewController = presented as? SecondViewController,
+          let selectedCellImageViewSnapshot = selectedCellImageViewSnapshot
+    else { return nil } // 실패 시 기본 애니메이션 사용
+    
+    animator = Animator(type: .present,
+                        firstViewController: firstViewController,
+                        secondViewController: secondViewController,
+                        selectedCellImageViewSnapshot: selectedCellImageViewSnapshot)
+    
+    return animator
   }
   
   func animationController(
     forDismissed dismissed: UIViewController
   ) -> UIViewControllerAnimatedTransitioning? {
-    return nil
+    
+    guard let secondViewController = dismissed as? SecondViewController,
+          let selectedCellImageViewSnapshot = selectedCellImageViewSnapshot
+    else { return nil }
+    
+    animator = Animator(type: .dismiss,
+                        firstViewController: self,
+                        secondViewController: secondViewController,
+                        selectedCellImageViewSnapshot: selectedCellImageViewSnapshot)
+    
+    return animator
   }
 }

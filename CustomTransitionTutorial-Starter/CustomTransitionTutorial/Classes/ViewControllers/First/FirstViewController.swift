@@ -10,7 +10,16 @@ import UIKit
 
 class FirstViewController: UIViewController {
   
+  /// 선택된(탭) 셀
+  var selectedCell: CollectionViewCell?
+  
+  /// 선택된 셀의 이미지 뷰 스냅샷
+  /// 스냅샷: 뷰의 현재 렌더링된 뷰
+  var selectedCellImageViewSnapshot: UIView?
+  
   @IBOutlet private var collectionView: UICollectionView!
+  
+  var animator: Animator?
   
   override func viewDidLoad() {
     super.viewDidLoad()
