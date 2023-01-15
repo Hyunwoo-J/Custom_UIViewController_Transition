@@ -18,7 +18,7 @@ final class Animator
   private let type: PresentationType
   private let firstViewController: FirstViewController
   private let secondViewController: SecondViewController
-  private let selectedCellImageViewSnapshot: UIView
+  private var selectedCellImageViewSnapshot: UIView
   private let cellImageViewRect: CGRect
   
   /// 실패 가능한 이니셜라이져를 사용함으로써 실패했을 경우, 기본 애니메이션을 사용한다.
@@ -71,31 +71,39 @@ final class Animator
     
     let isPresenting = type.isPresenting
     
-    let imageViewSnapshot: UIView
-    
     if isPresenting {
-      imageViewSnapshot = cellImageSnapshot
-    } else {
-      imageViewSnapshot = controllerImageSnapshot
+      selectedCellImageViewSnapshot = cellImageSnapshot
     }
     
     toView.alpha = 0
     
-    [imageViewSnapshot].forEach { containerView.addSubview($0) } // 나중에 더 많은 뷰가 추가될 예정
+    // 애니메이션화될 2개의 스냅샷 추가
+    [selectedCellImageViewSnapshot, controllerImageSnapshot].forEach { containerView.addSubview($0) } // 나중에 더 많은 뷰가 추가될 예정
     
     let controllerImageViewRect = secondViewController.locationImageView.convert(secondViewController.locationImageView.bounds, to: window)
     
-    [imageViewSnapshot].forEach {
+    [selectedCellImageViewSnapshot, controllerImageSnapshot].forEach {
       $0.frame = isPresenting ? cellImageViewRect : controllerImageViewRect
     }
     
+    controllerImageSnapshot.alpha = isPresenting ? 0 : 1
+    
+    selectedCellImageViewSnapshot.alpha = isPresenting ? 1 : 0
+    
     UIView.animateKeyframes(withDuration: Self.duration, delay: 0, options: .calculationModeCubic, animations: {
       UIView.addKeyframe(withRelativeStartTime: 0, relativeDuration: 1) {
-        imageViewSnapshot.frame = isPresenting ? controllerImageViewRect : self.cellImageViewRect
+        self.selectedCellImageViewSnapshot.frame = isPresenting ? controllerImageViewRect : self.cellImageViewRect
+        controllerImageSnapshot.frame = isPresenting ? controllerImageViewRect : self.cellImageViewRect
+      }
+      
+      UIView.addKeyframe(withRelativeStartTime: 0, relativeDuration: 0.6) {
+        self.selectedCellImageViewSnapshot.alpha = isPresenting ? 0 : 1
+        controllerImageSnapshot.alpha = isPresenting ? 1: 0
       }
     }, completion: { _ in
       
-      imageViewSnapshot.removeFromSuperview()
+      self.selectedCellImageViewSnapshot.removeFromSuperview()
+      controllerImageSnapshot.removeFromSuperview()
       
       toView.alpha = 1
       
